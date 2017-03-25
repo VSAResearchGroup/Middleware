@@ -1,0 +1,7 @@
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\bin\Debug\UnitTestVSA.dll
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\bin\Debug\UnitTestVSA.pdb
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.xml
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\obj\Debug\UnitTestVSA.csprojResolveAssemblyReference.cache
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\obj\Debug\UnitTestVSA.dll
+C:\Users\CDLADMIN\documents\visual studio 2015\Projects\Test\UnitTestVSA\obj\Debug\UnitTestVSA.pdb
