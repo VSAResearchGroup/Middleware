@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+This file is used by the publish/package process of your Web project. You can customize the behavior of this process
+by editing this MSBuild file. In order to learn more about this please visit http://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAHP7pZym5I0KyIZ4WvP/4ngAAAAACAAAAAAAQZgAAAAEAACAAAAAqHuJjdIAW1RwXDj0a5UdnoX43XVFoNYTbCmygP0WRCgAAAAAOgAAAAAIAACAAAAC7oiOAjUYZGsdaYkw7b4NqFbfEZU7y3x+/W6y92jxpA4AAAABNc+FdDOBtuyEJ09wtu4+7MqOUM+z8sNRhhauaNEB/DSzV8WfVJvWkuPX01EJWFQjW1CW/CUcgge2MClJjWln+wtJscPOtqtYjIEUtT5o/S4iYaOfZT7xE7mHDJ88vUXkeKGkYzSldsZ+5i53QylBnPmtrGqkGK8h1soxfS+eZkEAAAADZVja1XnT642WBEZPmhQiXY9RUISDtAbQCoWL5u3hzpiIWwUBB5wQliYo7EIzF3pYP86slg11vMJcRrelgRVIl</EncryptedPassword>
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="VirtualAdvisorConnectionString">
+      <Value>Server=sql11.ezhostingserver.com; Database=vsaDev;User Id =rc53kxCYoM; password=ThesisDefense17;</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>
