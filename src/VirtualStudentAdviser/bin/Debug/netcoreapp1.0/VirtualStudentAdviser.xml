@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VirtualStudentAdviser</name>
+    </assembly>
+    <members>
+        <member name="M:VirtualStudentAdviser.Controllers.RecEngineController.LaunchEngine(System.Int32,System.Int32)">
+            <summary>
+            Launches the rec engine using the major majorId and school schoolId
+            </summary>
+            <param name="majorId"></param>
+            <param name="schoolId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.TestController.testPlan(System.Int32)">
+            <summary>
+            Tests the plan with planId
+            </summary>
+            <para name ="planId" ></para>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.TestController.testAllPlans">
+            <summary>
+            Tests all plans in the DB.
+            </summary>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.Get(System.Int32)">
+             <summary>
+             Gets plan with planId id
+             </summary>
+             <para name ="id" ></para>
+             <remarks>
+               [
+                    ///     {
+                    ///        planId: 70,
+                    ///        courseNumber: "PHYS&amp;amp; 243",
+                    ///        quarter: "Fall",
+                    ///        year: 2016
+                  
+                    ///     }
+                    ///]
+             </remarks>
+            
+            
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.runRecEngine(VirtualStudentAdviser.Models.ParameterSet)">
+            <summary>
+             Runs the rec engine using ParameterSet param that is written to the body of the request
+            </summary>
+            <param name="param">
+            Input ParameterSet for the algorithm
+            </param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getCourses">
+             <summary>
+             Returns a list of course objects
+             </summary>
+            
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.savePlan(System.Collections.Generic.List{VirtualStudentAdviser.Models.SelectStudyPlan},System.Int32,System.Int32,System.String)">
+            <summary>
+            Saves study plan to database. 
+            </summary>
+            <remarks>
+            studyPlan is different than the plan stored with id oldPlanId but has the same major and school
+            </remarks>
+            <para name ="studyPlan" > List of SelectSudyPlan. These are the studyplans with the string values of the StudyPlan ids</para>
+            <para name ="studentId" >Id to the student the plan belongs to</para>
+            <para name ="oldPlanId" >The plan Id for the plan before the plan was manipulated by the user</para>
+            <para name ="planName" >Name of plan given by student</para>
+            <returns>
+            returns the new planId for the saved plan
+            </returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getInactivePlanInfo(System.Int32)">
+            <summary>
+            Returns all the inactive plans associated with studentId.
+            </summary>
+            <remarks>Returns all of the plans except the first since there is not a active field in the StudentStudyPlan table.
+             Needs to be changed to return the plans with an active value of 0 when active exists </remarks>
+            <para name ="studentId" >Id to the student the plan belongs to</para>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getActivePlanInfo(System.Int32)">
+             <summary>
+             Returns the active plan associated with studentId.
+             </summary>
+             <remarks>Returns the first plan since there is not an active field in the StudentStudyPlan table.
+              Needs to be changed to return the plan with an active value of 1 when active exists
+             
+             {
+               parameterSet": {
+                     id: 0,
+                     majorId: 0,
+                     major: "Mechanical Engineering",
+                     schoolId: 0,
+                     school: "\nUniversity of Washington",
+                     jobTypeId: 0,
+                     jobType: "Full Time",
+                     budgetId: 0,
+                     budget: "$100.00 - $599.99",
+                     timePreferenceId: 0,
+                     timePreference: "Morning",
+                     quarterPreferenceId: 0,
+                     quarterPreference: "Fall      ",
+                     completedCourses: "[1,2]",
+                     placementCourses: "Default placement",
+                     dateAdded: "0001-01-01T00:00:00",
+                     lastDateModified: "0001-01-01T00:00:00",
+                     status: 0
+                 },
+             planName": null,
+             studentId": 456,
+             planId": 2166
+            }
+             
+             
+              </remarks>
+             <para name ="studentId" >Id to the student the plan belongs to</para>
+        </member>
+    </members>
+</doc>

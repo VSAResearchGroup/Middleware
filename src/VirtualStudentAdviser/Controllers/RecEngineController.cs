@@ -25,7 +25,12 @@ namespace VirtualStudentAdviser.Controllers
         }
        
 
-     
+        /// <summary>
+        /// Launches the rec engine using the major majorId and school schoolId
+        /// </summary>
+        /// <param name="majorId"></param>
+        /// <param name="schoolId"></param>
+        /// <returns></returns>
         [HttpGet("LaunchEngine/{majorId}/{schoolId}"), Produces("application/json")]
         public JsonResult LaunchEngine(int majorId, int schoolId)
         {

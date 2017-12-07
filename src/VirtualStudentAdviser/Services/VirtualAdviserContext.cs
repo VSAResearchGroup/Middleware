@@ -21,6 +21,7 @@ namespace VirtualStudentAdviser.Services
         public virtual DbSet<Department> Department { get; set; }
         public virtual DbSet<JobType> JobType { get; set; }
         public virtual DbSet<Major> Major { get; set; }
+        public virtual DbSet<School> School { get; set; }
         public virtual DbSet<Quarter> Quarter { get; set; }
         public virtual DbSet<Student> Student { get; set; } 
         public virtual DbSet<TimeSlot> TimeSlot { get; set; }
@@ -33,6 +34,8 @@ namespace VirtualStudentAdviser.Services
         public virtual DbSet<StudentStudyPlan> StudentStudyPlan { get; set; }
         public virtual DbSet<ReviewedStudyPlan> ReviewedStudyPlan { get; set; } 
         public virtual DbSet<ParameterSet> ParameterSet { get; set; } 
+        public virtual DbSet<Budget> Budget { get; set; }
+        public virtual DbSet<TimePreference> TimePreference { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -137,9 +140,9 @@ namespace VirtualStudentAdviser.Services
                     .HasConstraintName("FK_Prerequisite_Course");
 
                 entity.HasOne(d => d.Course)
-                  .WithMany(p => p.Prerequisite)
-                  .HasForeignKey(d => d.PrerequisiteId)
-                  .HasConstraintName("FK_CPrerequisite_Course");
+                    .WithMany(p => p.Prerequisite)
+                    .HasForeignKey(d => d.PrerequisiteId)
+                    .HasConstraintName("FK_CPrerequisite_Course");
             });
 
             modelBuilder.Entity<Department>(entity =>
@@ -195,7 +198,15 @@ namespace VirtualStudentAdviser.Services
 
             });
 
-            modelBuilder.Entity<Student>(entity =>
+            modelBuilder.Entity<School>(entity =>
+            {
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Name).HasColumnName("Name");
+            });
+
+
+        modelBuilder.Entity<Student>(entity =>
             {
                 entity.Property(e => e.StudentId).HasColumnName("StudentID");
 
@@ -315,10 +326,18 @@ namespace VirtualStudentAdviser.Services
                 entity.Property(e => e.LastDateModified).HasColumnType("datetime");
 
                 entity.Property(e => e.Status).HasColumnName("Status");
-
+                entity.Property(e => e.PlanName).HasColumnName("PlanName");
             });
 
-            modelBuilder.Entity<ReviewedStudyPlan>(entity =>
+            modelBuilder.Entity<TimePreference>(entity =>
+            {
+                //    public int Id { get; set; }
+                //  public string TimePeriod { get; set; }
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+                entity.Property(e => e.TimePeriod).HasColumnName("TimePeriod");
+            });
+        modelBuilder.Entity<ReviewedStudyPlan>(entity =>
             {
                 entity.Property(e => e.Id).HasColumnName("ID");
 
@@ -338,6 +357,14 @@ namespace VirtualStudentAdviser.Services
 
                 entity.Property(e => e.Status).HasColumnName("Status");
 
+            });
+
+            modelBuilder.Entity<Budget>(entity =>
+            {
+                entity.Property(e => e.Id).HasColumnName("ID");
+                entity.Property(e => e.MaxCredit).HasColumnName("MaxCredit");
+                entity.Property(e => e.Name).HasColumnName("Budget");
+                entity.Property(e => e.ResidentStatusId).HasColumnName("ResidentStatusID");
             });
         }
         

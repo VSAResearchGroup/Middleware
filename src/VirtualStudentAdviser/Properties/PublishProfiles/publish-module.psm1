@@ -1005,7 +1005,8 @@ function Execute-Command {
         [System.IO.FileInfo]$workingDirectory
         )
     process{
-        $psi = New-Object -TypeName System.Diagnostics.ProcessStartInfo
+        $psi = New-Object -TypeName System.Diagnostics.Process
+		Info
         $psi.CreateNoWindow = $true
         $psi.UseShellExecute = $false
         $psi.RedirectStandardOutput = $true
