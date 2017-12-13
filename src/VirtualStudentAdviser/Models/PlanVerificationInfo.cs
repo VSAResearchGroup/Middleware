@@ -5,6 +5,12 @@ using System.Threading.Tasks;
 
 namespace VirtualStudentAdviser.Models
 {
+    /// <summary>
+    /// Association of planId to plan errors
+    /// </summary>
+    /// <remarks>To add additional error results a new public list can be added here.
+    /// A verification method needs to be added to PlanVerification and the list is populated in the runTests method
+    ///  </remarks>
     public class PlanVerificationInfo
     {
         public int planId;

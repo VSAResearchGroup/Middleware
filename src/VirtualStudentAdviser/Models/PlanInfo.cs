@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace VirtualStudentAdviser.Models
 {
+    /// <summary>
+    /// Association of paramater set with planName, studentId and planId
+    /// </summary>
     public class PlanInfo
     {
         public ParameterSet parameterSet { get; set; }

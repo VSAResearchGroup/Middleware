@@ -107,7 +107,6 @@ namespace VirtualStudentAdviser.Controllers
         /// <summary>
         /// Returns a list of course objects
         /// </summary>
-        ///
         [HttpGet("getCourses")]
         public JsonResult getCourses()
         {

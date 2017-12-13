@@ -154,12 +154,17 @@ namespace VirtualStudentAdviser
             return qtr;
         }
 
-        // makes sure the quarters are in the correct order
+        
         /// <summary>
-        /// 
+        /// makes sure the quarters are in the correct order
         /// </summary>
         /// <param name="studyPlan"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// true if the quarters are in correct order in the studyPlan
+        /// </returns>
+        /// <remarks>
+        /// This method is currentily not in use for plan verification but could be used as an unit test
+        /// </remarks>
         public static bool Output_CourseInfo_QuartersCorrectOrder(List<StudyPlan> studyPlan)
         {
             if (studyPlan.Count == 0)
@@ -214,12 +219,16 @@ namespace VirtualStudentAdviser
 
         }
 
-        // makes sure the quarters are in the correct order
         /// <summary>
-        /// 
+        ///  makes sure the quarters are in the correct order
         /// </summary>
         /// <param name="studyPlan"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// True if the quarters are in the correct order
+        /// </returns>
+        /// <remarks>
+        /// This method is currentily not in use for plan verification but could be used as an unit test
+        /// </remarks>
         public static bool Output_CourseInfo_YearsCorrectOrder(List<StudyPlan> studyPlan)
         {
             if (studyPlan.Count == 0)

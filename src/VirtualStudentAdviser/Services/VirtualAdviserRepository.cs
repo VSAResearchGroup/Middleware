@@ -19,12 +19,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace VirtualStudentAdviser.Services
 {
+    /// <summary>
+    /// Implements the IVirtualAdviserRepository. Set of functions to manipulate data in vsaDev datavase
+    /// </summary>
     public class VirtualAdviserRepository : IVirtualAdviserRepository
     {
         [DllImport("RecEngineCpp.dll", EntryPoint = "generate_plans", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         static extern void generate_plans(string input, StringBuilder plans, int len);
 
-
+        /// <summary>
+        /// Creates a study plan using the paramaters as inpuuts
+        /// </summary>
+        /// <param name="MajorId">The major of the plan</param>
+        /// <param name="CompleteCourses">All the courses the student has completed before plan generation</param>
+        /// <param name="SchoolId">The school of the plan</param>
+        /// <returns>A list of SelectStudyPlan</returns>
+        /// <remarks>
+        /// SelectStudyPlan contains string info of course and quarter.
+        /// </remarks>
         public List<SelectStudyPlan> launchEngine(int MajorId, int[] CompleteCourses, int SchoolId)
         {
             //Run phase 1
@@ -50,6 +62,10 @@ namespace VirtualStudentAdviser.Services
 
         }
 
+        /// <summary>
+        /// Creates a new VirtualAdviserRepository
+        /// </summary>
+        /// <param name="VirtualAdvisor">Database context to vsaDev</param>
         public VirtualAdviserRepository(VirtualAdviserContext VirtualAdvisor)
         {
             this.VirtualAdvisor = VirtualAdvisor;
@@ -254,6 +270,12 @@ namespace VirtualStudentAdviser.Services
 
         //}
 
+        // exeption thrown when a course is scheduled but has no offerings in the courseTime table
+       
+        /// <summary>
+        /// Thrown when the algorithm tries to schedule a course that has no time scheduling
+        /// </summary>
+     
         public class ClassHasNoScheduledTimesException : Exception
         {
             public ClassHasNoScheduledTimesException(string message) : base(message)
@@ -290,34 +312,7 @@ namespace VirtualStudentAdviser.Services
 
         }
 
-        public List<StudyPlan> GetAllStudyPlans()
-        {
-
-
-            List<StudyPlan> plan = new List<StudyPlan>();
-            var value = from sp in VirtualAdvisor.StudyPlan
-
-                join crs in VirtualAdvisor.Course on sp.CourseId equals crs.CourseId
-                join qt in VirtualAdvisor.Quarter on sp.QuarterId equals qt.QuarterId
-                orderby sp.YearId, sp.QuarterId
-                select new { sp.PlanId, qt.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified };
-
-
-
-
-            //group new { studyPlan.PlanId, course.CourseNumber, quarter.QuarterName, studyPlan.YearId } by studyPlan.Id into SelectStudyPlan
-            //orderby studyPlan.YearId
-            // select SelectStudyPlan;
-
-            // var val = VirtualAdvisor.StudyPlan.Where(s => s.PlanId == planId).Join(VirtualAdvisor.Course).
-
-            foreach (var sp in value)
-            {
-                plan.Add(new StudyPlan(sp.PlanId, sp.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified));
-            }
-
-            return plan;
-        }
+       
 
         public int[] getGlobalPostReq(int CourseID)
         {
@@ -570,6 +565,7 @@ namespace VirtualStudentAdviser.Services
             return DeptId;
         }
 
+
         public Dictionary<int, int[]> getAllCoursePreReqs(int majorId, int schoolId)
         {
             int[] requiredCourses = getTargetCourses(majorId, schoolId);
@@ -595,6 +591,7 @@ namespace VirtualStudentAdviser.Services
                 .ToArray();
         }
 
+     
         public int[] getCourseGroup(int CourseId)
         {
             int[] GroupIds = VirtualAdvisor.Prerequisite.Where(p => p.CourseId == CourseId).Select(pre => pre.GroupId).Distinct().ToArray<int>();
@@ -616,11 +613,6 @@ namespace VirtualStudentAdviser.Services
             return Prerequisites;
         }
 
-        public Dictionary<int, int[]> getPrerequisites(int courseId)
-        {
-            return VirtualAdvisor.Prerequisite.Where(c => c.CourseId == courseId).GroupBy(g => g.GroupId).ToDictionary(m => m.Key, m => m.Select(s => s.PrerequisiteId).ToArray());
-
-        }
 
         public int[] getAllPrerequisite(int CourseId)
         {
@@ -687,6 +679,14 @@ namespace VirtualStudentAdviser.Services
             return CourseSchedule;
         }
 
+        /// <summary>
+        /// Gets list of course's scheduling
+        /// </summary>
+        /// <param name="CourseId">The courseId to find the target course</param>
+        /// <returns>List of course schedule arrays
+        /// 
+        /// result= {StartTimeId, EndTimeId, DayId, QuarterId, Year}
+        /// </returns>
         public List<int[]> getCourseSchedule(int CourseId)
         {
             List<int[]> CourseSchedule = new List<int[]>();
@@ -713,12 +713,21 @@ namespace VirtualStudentAdviser.Services
             return courseNode;
         }
 
-       
 
+
+        //
         // returns major school pair
         // returnVal[0] is the planId
         // returnVal[1] is the majorId
         // returnVal[2] is the schoolId
+        /// <summary>
+        /// returns major school pair associated with planID
+        /// </summary>
+        /// <param name="planID">plan</param>
+        /// <returns>   returnVal[0] is the planId
+        ///returnVal[1] is the majorId
+        ///returnVal[2] is the schoolId
+         ///   </returns>
         public int[] getMajorSchoolPairs(int planID)
         {
             //select  ps.MajorId, ps.SchoolID
@@ -772,30 +781,7 @@ var b=
 
             return plan;
         }
-        public List<StudyPlan> GetStudyPlans(int planId)
-        {
-            List<StudyPlan> plan = new List<StudyPlan>();
-            var value = from sp in VirtualAdvisor.StudyPlan
-                where sp.PlanId == planId
-                join crs in VirtualAdvisor.Course on sp.CourseId equals crs.CourseId
-                join qt in VirtualAdvisor.Quarter on sp.QuarterId equals qt.QuarterId
-                orderby sp.YearId, sp.QuarterId
-                select new { sp.PlanId, qt.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified };
-
-
-            //group new { studyPlan.PlanId, course.CourseNumber, quarter.QuarterName, studyPlan.YearId } by studyPlan.Id into SelectStudyPlan
-            //orderby studyPlan.YearId
-            // select SelectStudyPlan;
-
-            // var val = VirtualAdvisor.StudyPlan.Where(s => s.PlanId == planId).Join(VirtualAdvisor.Course).
-
-            foreach (var sp in value)
-            {
-                plan.Add(new StudyPlan(sp.PlanId, sp.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified));
-            }
-
-            return plan;
-        }
+        
 
         public List<SelectStudyPlan> getStudyPlan(int planId) {
 
@@ -927,6 +913,8 @@ var b=
 
             }
         }
+
+
         public PlanVerificationInfo testPlan(List<StudyPlan> studyPlan, int majorId, int schoolId, int[] requiredCourses, List<Course> courses)
         {
 
@@ -951,11 +939,18 @@ var b=
                 join ps in VirtualAdvisor.ParameterSet on gp.ParameterSetId equals ps.Id
                                             select ps.CompletedCourses).FirstOrDefault();
             string[] completedCourses = completedCoursesString.Substring(1, completedCoursesString.Length - 2).Split(',');
+            int[] completeCoursesInts  = new int[completedCourses.Length];
+         
 
-            int[] completeCoursesInts = new int[completedCourses.Length];
+
             for (int i =0; i < completeCoursesInts.Length; i++)
             {
-                completeCoursesInts[i] = int.Parse(completedCourses[i]);
+                if (completedCourses[i].Equals(""))
+                {
+                    break;
+                }
+                
+                    completeCoursesInts[i] = int.Parse(completedCourses[i]);
             }
           PlanVerificationInfo testResult = PlanVerification.runTests(studyPlan, prereqs, requiredCourses, courses, completeCoursesInts, VirtualAdvisor);
 
@@ -1065,6 +1060,7 @@ var b=
             VirtualAdvisor.SaveChanges();
         }
 
+
         public void insertStudentStudyPlan(int StudentId, int PlanId, int Status, string PlanName)
         {
             StudentStudyPlan sPlan = new StudentStudyPlan(StudentId, PlanId, DateTime.Now, DateTime.Now, Status,PlanName);//(Name, ParameterSetId, DateTime.Now, DateTime.Now, Status);
@@ -1116,6 +1112,13 @@ var b=
                     return -1;
             }
         }
+
+        /// <summary>
+        /// Takes SelectStudyPlan (string representation) and parses it into StudyPlan (id representation) 
+        /// </summary>
+        /// <param name="studyPlan">The studyPlan with string values</param>
+        /// <returns>StudyPlan with the associated id keys</returns>
+        /// <remarks>SelectStudyPlan is the format the webpage sends to the API in the body of the message.</remarks>
         public List<StudyPlan> convertStudyPlan(List<SelectStudyPlan> studyPlan)
         {
             List<StudyPlan> result = new List<StudyPlan>();

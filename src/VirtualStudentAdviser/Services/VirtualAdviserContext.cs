@@ -7,6 +7,9 @@ using VirtualStudentAdviser.Models;
 
 namespace VirtualStudentAdviser.Services
 {
+    /// <summary>
+    /// DbContext for reading and writing to the vsaDev datavase
+    /// </summary>
     public  class VirtualAdviserContext : DbContext
     {
 
