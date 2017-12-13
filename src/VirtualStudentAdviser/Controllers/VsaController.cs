@@ -45,14 +45,14 @@ namespace VirtualStudentAdviser.Controllers
         /// <para name ="id" ></para>
         /// <remarks>
         ///   [
-        ///        ///     {
-        ///        ///        planId: 70,
-        ///        ///        courseNumber: "PHYS&amp;amp; 243",
-        ///        ///        quarter: "Fall",
-        ///        ///        year: 2016
+        ///          {
+        ///              planId: 70,
+        ///              courseNumber: "PHYS& 243",
+        ///                quarter: "Fall",
+        ///                year: 2016
         ///      
-        ///        ///     }
-        ///        ///]
+        ///             }
+        ///    ]
         /// </remarks>
         ///
         ///

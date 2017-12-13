@@ -30,6 +30,7 @@ namespace VirtualStudentAdviser.Models
         public string Budget { get; set; }
 
         public int TimePreferenceId { get; set; }
+
         [NotMapped]
         public string TimePreference { get; set; }
 
