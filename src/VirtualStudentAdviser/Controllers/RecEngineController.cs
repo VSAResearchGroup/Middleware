@@ -12,6 +12,7 @@ using System.Net.Http;
 
 namespace VirtualStudentAdviser.Controllers
 {
+
     [Route("api/RecEngine")] 
     public class RecEngineController : Controller
     {
@@ -19,13 +20,19 @@ namespace VirtualStudentAdviser.Controllers
 
         private readonly IVirtualAdviserRepository _IVSARepostory;
 
+
         public RecEngineController(IVirtualAdviserRepository IVSARepostory)
         {
             _IVSARepostory = IVSARepostory;
         }
        
 
-     
+        /// <summary>
+        /// Launches the rec engine using the major majorId and school schoolId
+        /// </summary>
+        /// <param name="majorId"></param>
+        /// <param name="schoolId"></param>
+        /// <returns></returns>
         [HttpGet("LaunchEngine/{majorId}/{schoolId}"), Produces("application/json")]
         public JsonResult LaunchEngine(int majorId, int schoolId)
         {

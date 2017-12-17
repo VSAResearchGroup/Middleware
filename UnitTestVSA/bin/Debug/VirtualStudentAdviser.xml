@@ -1,0 +1,208 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VirtualStudentAdviser</name>
+    </assembly>
+    <members>
+        <member name="M:VirtualStudentAdviser.Controllers.RecEngineController.LaunchEngine(System.Int32,System.Int32)">
+            <summary>
+            Launches the rec engine using the major majorId and school schoolId
+            </summary>
+            <param name="majorId"></param>
+            <param name="schoolId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.TestController.testPlan(System.Int32)">
+            <summary>
+            Tests the plan with planId
+            </summary>
+            <para name ="planId" >The planId of plan to test</para>
+            
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.TestController.testAllPlans">
+            <summary>
+            Tests all plans in the DB.
+            </summary>
+            <remarks>
+            Need to store test result. No need to retest plans more than once and takes around 20 minutes to do the current set.
+            </remarks>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:VirtualStudentAdviser.Controllers.VSAController.Get(System.Int32)" -->
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.runRecEngine(VirtualStudentAdviser.Models.ParameterSet)">
+            <summary>
+             Runs the rec engine using ParameterSet param that is written to the body of the request
+            </summary>
+            <param name="param">
+            Input ParameterSet for the algorithm
+            </param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getCourses">
+             <summary>
+             Returns a list of course objects
+             </summary>
+            
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.savePlan(System.Collections.Generic.List{VirtualStudentAdviser.Models.SelectStudyPlan},System.Int32,System.Int32,System.String)">
+            <summary>
+            Saves study plan to database. 
+            </summary>
+            <remarks>
+            studyPlan is different than the plan stored with id oldPlanId but has the same major and school
+            </remarks>
+            <para name ="studyPlan" > List of SelectSudyPlan. These are the studyplans with the string values of the StudyPlan ids</para>
+            <para name ="studentId" >Id to the student the plan belongs to</para>
+            <para name ="oldPlanId" >The plan Id for the plan before the plan was manipulated by the user</para>
+            <para name ="planName" >Name of plan given by student</para>
+            <returns>
+            returns the new planId for the saved plan
+            </returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getInactivePlanInfo(System.Int32)">
+            <summary>
+            Returns all the inactive plans associated with studentId.
+            </summary>
+            <remarks>Returns all of the plans except the first since there is not a active field in the StudentStudyPlan table.
+             Needs to be changed to return the plans with an active value of 0 when active exists </remarks>
+            <para name ="studentId" >Id to the student the plan belongs to</para>
+        </member>
+        <member name="M:VirtualStudentAdviser.Controllers.VSAController.getActivePlanInfo(System.Int32)">
+             <summary>
+             Returns the active plan associated with studentId.
+             </summary>
+             <remarks>Returns the first plan since there is not an active field in the StudentStudyPlan table.
+              Needs to be changed to return the plan with an active value of 1 when active exists
+             
+             {
+               parameterSet": {
+                     id: 0,
+                     majorId: 0,
+                     major: "Mechanical Engineering",
+                     schoolId: 0,
+                     school: "\nUniversity of Washington",
+                     jobTypeId: 0,
+                     jobType: "Full Time",
+                     budgetId: 0,
+                     budget: "$100.00 - $599.99",
+                     timePreferenceId: 0,
+                     timePreference: "Morning",
+                     quarterPreferenceId: 0,
+                     quarterPreference: "Fall      ",
+                     completedCourses: "[1,2]",
+                     placementCourses: "Default placement",
+                     dateAdded: "0001-01-01T00:00:00",
+                     lastDateModified: "0001-01-01T00:00:00",
+                     status: 0
+                 },
+             planName": null,
+             studentId": 456,
+             planId": 2166
+            }
+             
+             
+              </remarks>
+             <para name ="studentId" >Id to the student the plan belongs to</para>
+        </member>
+        <member name="T:VirtualStudentAdviser.PlanVerification">
+            <summary>
+            Takes academic plans from database or as List of StudyPlans and enumerates the errors
+            </summary>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.runTests(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan},System.Collections.Generic.Dictionary{System.Int32,System.Int32[][]},System.Int32[],System.Collections.Generic.List{VirtualStudentAdviser.Models.Course},System.Int32[],VirtualStudentAdviser.Services.VirtualAdviserContext)">
+            <summary>
+            Takes study plan and enumerates errors
+            </summary>
+            <param name="studyPlan"> List of StudyPlan that all share the same planId </param>
+            <param name="prereqs"> mapping of course and prerequisite groups</param>
+            for example:
+             course group prereq
+             199	1	  191
+             199	1	  264
+             199	2	  191
+             199	2	  1246
+             199	2	  268  
+            
+             <param name="requiredCourses"> All required course for plan's major and school</param>
+             <param name="courses"> List of all courses availabvle at EvCC in db</param>
+             <param name="completedCourses"> the starting point of student. The classes the student has complete at time of generation</param>
+            <param name="vac">copy of the database context.</param>
+            <remarks>
+            The VirtualAdviserContex is passed in to have access to course scheduling but that table could be added as a paramater as a List of CourseTime. 
+            
+            </remarks>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.Ouput_CoursesScheduledCorrectily(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan},VirtualStudentAdviser.Services.VirtualAdviserContext)">
+            <summary>
+            checks that all scheduled courses are in quarters that offer that course
+            </summary>
+            <param name="studyPlan">The list of StudyPlans represetingh the plan to test</param>
+            <param name="vac">Database Context to retrieve CourseTime info</param>
+            <returns>list of all courseIds that are in quarters they are not offered</returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.getCourseNumberFromId(System.Int32,System.Collections.Generic.List{VirtualStudentAdviser.Models.Course})">
+            <summary>
+            Gets the string of the course with courseId equal to param courseId
+            </summary>
+            <param name="courseId">The courseId of the course to find the title</param>
+            <param name="courses">List of all courses</param>
+            <returns>string of course representing courseId</returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.getNextQuarter(System.Int32)">
+            <summary>
+            Uses param qtr to return the next quarters id.
+            </summary>
+            <param name="qtr"> The current quarterId</param>
+            <returns>The next quarterId</returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.Output_CourseInfo_QuartersCorrectOrder(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan})">
+            <summary>
+            
+            </summary>
+            <param name="studyPlan"></param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.getNextYear(System.Int32,System.Int32)">
+            <summary>
+            using param year and qtr returns the next year if associated with the next qtr
+            </summary>
+            <param name="year">The current year</param>
+            <param name="qtr">The current qtrId</param>
+            <returns>Next qtrs year</returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.Output_CourseInfo_YearsCorrectOrder(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan})">
+            <summary>
+            
+            </summary>
+            <param name="studyPlan"></param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.Output_DegreeFulfilled(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan},System.Collections.Generic.List{System.Int32})">
+            <summary>
+            Ensures that studyPlan contains all degrees required courses
+            </summary>
+            <param name="studyPlan">Current Study Plan</param>
+            <param name="requiredCourses">List of degree required courses</param>
+            <returns></returns>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.Output_CorrectOrderOfPreReq(System.Collections.Generic.List{VirtualStudentAdviser.Models.StudyPlan},System.Collections.Generic.Dictionary{System.Int32,System.Int32[][]},System.Int32[])">
+            <summary>
+            Ensures that all the courses have thier prereqs scheudled correctily
+            </summary>
+            <param name="studyPlan">The current Plan</param>
+            <param name="prereq">Mapping of courseId to array of prereq groups</param>
+            <param name="takenCourses">all the courses the student already has taken</param>
+            <returns>mapping of course id and list of unschedued prereq</returns>
+            <remarks>
+            If all the prereq groups are unfulfilled, it chooses the missing courses from the last prereq group for validation messages  
+            </remarks>
+        </member>
+        <member name="M:VirtualStudentAdviser.PlanVerification.getPrereqGroups(System.Collections.Generic.Dictionary{System.Int32,System.Int32[][]},System.Int32)">
+            <summary>
+            returns the group associated with courseId
+            </summary>
+            <param name="prereqs"> Mapping of courseId to prereq groups</param>
+            <param name="courseId"> current courseId</param>
+            <returns>The group associated with courseId. If courseId has no groups it returns int[0][]</returns>
+        </member>
+    </members>
+</doc>

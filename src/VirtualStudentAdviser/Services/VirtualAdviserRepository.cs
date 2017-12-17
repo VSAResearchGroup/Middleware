@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
@@ -9,16 +10,33 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using VirtualStudentAdviser.Models;
+using System.Data.SqlClient;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace VirtualStudentAdviser.Services
 {
+    /// <summary>
+    /// Implements the IVirtualAdviserRepository. Set of functions to manipulate data in vsaDev datavase
+    /// </summary>
     public class VirtualAdviserRepository : IVirtualAdviserRepository
     {
         [DllImport("RecEngineCpp.dll", EntryPoint = "generate_plans", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         static extern void generate_plans(string input, StringBuilder plans, int len);
 
-
+        /// <summary>
+        /// Creates a study plan using the paramaters as inpuuts
+        /// </summary>
+        /// <param name="MajorId">The major of the plan</param>
+        /// <param name="CompleteCourses">All the courses the student has completed before plan generation</param>
+        /// <param name="SchoolId">The school of the plan</param>
+        /// <returns>A list of SelectStudyPlan</returns>
+        /// <remarks>
+        /// SelectStudyPlan contains string info of course and quarter.
+        /// </remarks>
         public List<SelectStudyPlan> launchEngine(int MajorId, int[] CompleteCourses, int SchoolId)
         {
             //Run phase 1
@@ -35,6 +53,7 @@ namespace VirtualStudentAdviser.Services
 
             //Phase 2b
             //Parse Json String Plan and store in the database
+
             ParseStudyPlan("Latest", plans.ToString());
             List<SelectStudyPlan> finalPlan =  getStudyPlan(planID);
             return finalPlan;
@@ -43,6 +62,10 @@ namespace VirtualStudentAdviser.Services
 
         }
 
+        /// <summary>
+        /// Creates a new VirtualAdviserRepository
+        /// </summary>
+        /// <param name="VirtualAdvisor">Database context to vsaDev</param>
         public VirtualAdviserRepository(VirtualAdviserContext VirtualAdvisor)
         {
             this.VirtualAdvisor = VirtualAdvisor;
@@ -247,6 +270,19 @@ namespace VirtualStudentAdviser.Services
 
         //}
 
+        // exeption thrown when a course is scheduled but has no offerings in the courseTime table
+       
+        /// <summary>
+        /// Thrown when the algorithm tries to schedule a course that has no time scheduling
+        /// </summary>
+     
+        public class ClassHasNoScheduledTimesException : Exception
+        {
+            public ClassHasNoScheduledTimesException(string message) : base(message)
+            {
+            }
+        }
+
         public void getAllCourseSchedule()
         {
 
@@ -255,6 +291,11 @@ namespace VirtualStudentAdviser.Services
             foreach (int CourseId in courseList)
             {
                 List<int[]> CourseSchedule = getCourseSchedule(CourseId);
+                if (CourseSchedule.Count == 0)
+                {
+                    throw new ClassHasNoScheduledTimesException(CourseId + " has no entries in CourseTime");
+
+                }
                 int[] floatingCourse = getAllPrerequisite(CourseId);
                 globalPostReq.Add(CourseId, getPostrequisite(CourseId));
                 globalCourseSchedule.Add(CourseId, CourseSchedule);
@@ -271,6 +312,7 @@ namespace VirtualStudentAdviser.Services
 
         }
 
+       
 
         public int[] getGlobalPostReq(int CourseID)
         {
@@ -524,13 +566,32 @@ namespace VirtualStudentAdviser.Services
         }
 
 
+        public Dictionary<int, int[]> getAllCoursePreReqs(int majorId, int schoolId)
+        {
+            int[] requiredCourses = getTargetCourses(majorId, schoolId);
+            Dictionary<int, int[]> result = new Dictionary<int, int[]>();
+
+            foreach (int i in requiredCourses)
+            {
+                result.Add(i, getAllPrerequisite(i));
+            }
+            return result;
+        }
+
+
         public int[] getTargetCourses(int MajorId, int SchoolId)
         {
             int[] TargetCourses = VirtualAdvisor.AdmissionRequiredCourses.Where(a => a.MajorId == MajorId && a.SchoolId == SchoolId).Select(a => a.CourseId).ToArray<int>();
             return TargetCourses;
         }
 
+        public int[][] getAllTargetCourses()
+        {
+            return VirtualAdvisor.AdmissionRequiredCourses.Select(m => new[] {m.CourseId, m.MajorId, m.SchoolId})
+                .ToArray();
+        }
 
+     
         public int[] getCourseGroup(int CourseId)
         {
             int[] GroupIds = VirtualAdvisor.Prerequisite.Where(p => p.CourseId == CourseId).Select(pre => pre.GroupId).Distinct().ToArray<int>();
@@ -571,6 +632,14 @@ namespace VirtualStudentAdviser.Services
             return courseNumber;
         }
 
+
+        public int getCourseId(string CourseNumber)
+        {
+            int courseId = VirtualAdvisor.Course.Where(c => c.CourseNumber.ToLower().Trim().Equals(CourseNumber.ToLower().Trim())).Select(c => c.CourseId).FirstOrDefault();
+            return courseId;
+        }
+
+
         public int getCourseCredit(int CourseId)
         {
             int courseCredit = Convert.ToInt32(VirtualAdvisor.Course.Where(c => c.CourseId == CourseId).Select(c => c.MaxCredit).FirstOrDefault());
@@ -610,6 +679,14 @@ namespace VirtualStudentAdviser.Services
             return CourseSchedule;
         }
 
+        /// <summary>
+        /// Gets list of course's scheduling
+        /// </summary>
+        /// <param name="CourseId">The courseId to find the target course</param>
+        /// <returns>List of course schedule arrays
+        /// 
+        /// result= {StartTimeId, EndTimeId, DayId, QuarterId, Year}
+        /// </returns>
         public List<int[]> getCourseSchedule(int CourseId)
         {
             List<int[]> CourseSchedule = new List<int[]>();
@@ -636,7 +713,75 @@ namespace VirtualStudentAdviser.Services
             return courseNode;
         }
 
-      
+
+
+        //
+        // returns major school pair
+        // returnVal[0] is the planId
+        // returnVal[1] is the majorId
+        // returnVal[2] is the schoolId
+        /// <summary>
+        /// returns major school pair associated with planID
+        /// </summary>
+        /// <param name="planID">plan</param>
+        /// <returns>   returnVal[0] is the planId
+        ///returnVal[1] is the majorId
+        ///returnVal[2] is the schoolId
+         ///   </returns>
+        public int[] getMajorSchoolPairs(int planID)
+        {
+            //select  ps.MajorId, ps.SchoolID
+            //from VirtualAdvisor.StudentStudyPlan ssp
+            // join GeneratedPlan gp on ssp.PlanID = gp.ID
+            // join ParameterSet ps on gp.ParamaterSetId = ps.ID
+var b=
+            from ssp in VirtualAdvisor.StudentStudyPlan
+                join gp in VirtualAdvisor.GeneratedPlan on ssp.PlanId equals gp.Id
+                join ps in VirtualAdvisor.ParameterSet on gp.ParameterSetId equals ps.Id
+                where ssp.PlanId == planID
+                select new []{ ps.MajorId, ps.SchoolId};
+
+
+            return b.First();
+        }
+
+
+        public int[] getPlanIds()
+        {
+            var value = from ssp in VirtualAdvisor.StudentStudyPlan
+                select ssp.PlanId;
+                
+
+            return value.ToArray();
+        }
+
+
+
+        public List<StudyPlan> getStudyPlans(int planId)
+        {
+            List<StudyPlan> plan = new List<StudyPlan>();
+            var value = from sp in VirtualAdvisor.StudyPlan
+                where sp.PlanId == planId
+                join crs in VirtualAdvisor.Course on sp.CourseId equals crs.CourseId
+                join qt in VirtualAdvisor.Quarter on sp.QuarterId equals qt.QuarterId
+                orderby sp.YearId, sp.QuarterId
+                select new { sp.PlanId, qt.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified };
+
+
+            //group new { studyPlan.PlanId, course.CourseNumber, quarter.QuarterName, studyPlan.YearId } by studyPlan.Id into SelectStudyPlan
+            //orderby studyPlan.YearId
+            // select SelectStudyPlan;
+
+            // var val = VirtualAdvisor.StudyPlan.Where(s => s.PlanId == planId).Join(VirtualAdvisor.Course).
+
+            foreach (var sp in value)
+            {
+                plan.Add(new StudyPlan(sp.PlanId, sp.QuarterId, sp.YearId, sp.CourseId, sp.DateAdded, sp.LastDateModified));
+            }
+
+            return plan;
+        }
+        
 
         public List<SelectStudyPlan> getStudyPlan(int planId) {
 
@@ -689,6 +834,8 @@ namespace VirtualStudentAdviser.Services
             ParameterSet param = new ParameterSet(MajorId, SchoolId, JobTypeId: 1, BudgetId: 1, TimePreferenceId: 1, QuarterPreferenceId: 1,
                 CompletedCourses: JsonConvert.SerializeObject(CompletedCourses), PlacementCourses: "Default placement");
             VirtualAdvisor.ParameterSet.Add(param);
+            VirtualAdvisor.Entry(param).State = EntityState.Added;
+
             VirtualAdvisor.SaveChanges();
             parameterSetID = param.Id;
 
@@ -721,6 +868,8 @@ namespace VirtualStudentAdviser.Services
 
 
         }
+
+       
           
         public void ParseStudyPlan(string planName, string outputString)
         {
@@ -734,7 +883,7 @@ namespace VirtualStudentAdviser.Services
             {
                 float planScore = (float)plan["PlanScore"];
                 planID = insertPlan(planName, parameterSetID, 1, planScore);
-                insertStudentStudyPlan(456, planID, 1);
+                insertStudentStudyPlan(456, planID, 1, "");
 
                 JArray items = (JArray)plan["Quarters"];
                 int count = items.Count;
@@ -766,6 +915,121 @@ namespace VirtualStudentAdviser.Services
         }
 
 
+        public PlanVerificationInfo testPlan(List<StudyPlan> studyPlan, int majorId, int schoolId, int[] requiredCourses, List<Course> courses)
+        {
+
+            int planId = studyPlan[0].PlanId;
+            var query = from c in VirtualAdvisor.Prerequisite
+                orderby c.CourseId , c.GroupId 
+                select new { c.CourseId, c.GroupId ,c.PrerequisiteId};
+
+            Dictionary<int, int[][]> prereqs = (from w in query.ToList()
+
+                group w by w.CourseId
+                into g
+                select new
+                {
+                    key = g.Key,
+                    items = g.Select(m => new {m.GroupId, m.PrerequisiteId}).GroupBy(m => m.GroupId).Select(m => m.Select(y=>y.PrerequisiteId).ToArray()).ToArray()
+                }
+            ).ToDictionary(m => m.key, m => m.items.ToArray());
+
+            string completedCoursesString = (from gp in VirtualAdvisor.GeneratedPlan
+                where gp.Id == planId
+                join ps in VirtualAdvisor.ParameterSet on gp.ParameterSetId equals ps.Id
+                                            select ps.CompletedCourses).FirstOrDefault();
+            string[] completedCourses = completedCoursesString.Substring(1, completedCoursesString.Length - 2).Split(',');
+            int[] completeCoursesInts  = new int[completedCourses.Length];
+         
+
+
+            for (int i =0; i < completeCoursesInts.Length; i++)
+            {
+                if (completedCourses[i].Equals(""))
+                {
+                    break;
+                }
+                
+                    completeCoursesInts[i] = int.Parse(completedCourses[i]);
+            }
+          PlanVerificationInfo testResult = PlanVerification.runTests(studyPlan, prereqs, requiredCourses, courses, completeCoursesInts, VirtualAdvisor);
+
+            return testResult;
+        }
+
+
+        public List<Course> getAllCourses()
+        {
+            return VirtualAdvisor.Course
+                .Select(n => new Course { CourseNumber = n.CourseNumber, CourseId = n.CourseId,  Title = n.Title, MaxCredit = n.MaxCredit, PreRequisites = n.PreRequisites }).ToList();
+        }
+
+        // gets active plan
+        public PlanInfo GetActiveParameterSet(int studentId)
+        {
+            // there is no active plan field in db so the first plan in set is randommily selected as active plan
+            // Degree
+            var result = GetPlanInfos().Where(m => m.studentId == studentId);
+           
+            
+            // ps.BudgetId, ps.JobTypeId,ps.QuarterPreferenceId,ps.TimePreferenceId};
+            return result.FirstOrDefault();
+        }
+
+
+
+        private IEnumerable<PlanInfo> GetPlanInfos()
+        {
+            var
+                result = from i in VirtualAdvisor.StudentStudyPlan
+
+                    join ps in VirtualAdvisor.ParameterSet on i.PlanId equals ps.Id
+                    join major in VirtualAdvisor.Major on  ps.MajorId equals major.Id
+                    join school in VirtualAdvisor.School on ps.SchoolId equals school.Id
+                    join jt in VirtualAdvisor.JobType on ps.JobTypeId equals jt.Id
+                    join b in VirtualAdvisor.Budget on ps.BudgetId equals b.Id
+                    join t in VirtualAdvisor.TimePreference on ps.TimePreferenceId equals t.Id
+                    join q in VirtualAdvisor.Quarter on ps.QuarterPreferenceId equals q.QuarterId
+                    //join budget in VirtualAdvisor.Bu
+
+                    //int planId, string Major, string School, string JobType, string Budget, string TimePreference, string QuarterPreference,string CompletedCourses, string PlacementCourses
+                    select new PlanInfo(new ParameterSet(major.Name, school.Name, jt.JobType1, b.Name, t.TimePeriod, q.QuarterName, ps.CompletedCourses, ps.PlacementCourses), i.PlanName, i.StudentId, i.PlanId);
+
+                
+            return result;
+        }
+
+        // gets active plan
+        public PlanInfo[] GetInactiveParameterSets(int studentId)
+        {
+            // there is no active plan field in db so the first plan in set is randommily selected as active plan
+            // Degree
+
+            var result = GetPlanInfos().Where(m => m.studentId ==   studentId);
+            var activePlanParma = result.FirstOrDefault();
+            if (activePlanParma == null)
+            {
+                return new PlanInfo[0];
+            }
+            var activePlanId = activePlanParma.parameterSet.Id;
+
+            return result.Where(m => m.planId != activePlanId ).ToArray();
+        }
+
+
+
+        public PlanInfo GetParameterSet(int planId)
+        {
+            // there is no active plan field in db so the first plan in set is randommily selected as active plan
+            
+            // Degree
+            var result = GetPlanInfos().Where(m => m.parameterSet.Id == planId);
+
+            // ps.BudgetId, ps.JobTypeId,ps.QuarterPreferenceId,ps.TimePreferenceId};
+            return result.FirstOrDefault();
+        }
+
+
         public int insertPlan(string Name, int ParameterSetId, int Status, float Score)
         {
 
@@ -773,7 +1037,10 @@ namespace VirtualStudentAdviser.Services
 
             // var vsa = new VirtualAdviserContext();
             VirtualAdvisor.GeneratedPlan.Add(gPlan);
+            VirtualAdvisor.Entry(gPlan).State = EntityState.Added;
+
             VirtualAdvisor.SaveChanges();
+
             int PlanId = gPlan.Id;
             return PlanId;
         }
@@ -781,31 +1048,95 @@ namespace VirtualStudentAdviser.Services
          
         public void insertStudyPlan(List<StudyPlan> studyPlan)
         {
-            int count = studyPlan.Count;
-            StudyPlan[] newStudyPlan = new StudyPlan[count];
-            for (int i = 0; i < count; i++)
+          
+            // var vsa = new VirtualAdviserContext();
+            foreach (var c in studyPlan)
             {
-                newStudyPlan[i] = studyPlan[i];
+                VirtualAdvisor.Add(c);
+                VirtualAdvisor.Entry(c).State = EntityState.Added;
+
             }
 
-            // var vsa = new VirtualAdviserContext();
-            VirtualAdvisor.AddRange(newStudyPlan);
             VirtualAdvisor.SaveChanges();
         }
 
-        public void insertStudentStudyPlan(int StudentId, int PlanId, int Status)
+
+        public void insertStudentStudyPlan(int StudentId, int PlanId, int Status, string PlanName)
         {
-            StudentStudyPlan sPlan = new StudentStudyPlan(StudentId, PlanId, DateTime.Now, DateTime.Now, Status);//(Name, ParameterSetId, DateTime.Now, DateTime.Now, Status);
+            StudentStudyPlan sPlan = new StudentStudyPlan(StudentId, PlanId, DateTime.Now, DateTime.Now, Status,PlanName);//(Name, ParameterSetId, DateTime.Now, DateTime.Now, Status);
 
             // var vsa = new VirtualAdviserContext();
             VirtualAdvisor.StudentStudyPlan.Add(sPlan);
+            VirtualAdvisor.Entry(sPlan).State = EntityState.Added;
+            
             VirtualAdvisor.SaveChanges();
 
         }
 
+        
 
+        public int insertNewStudyPlan(List<StudyPlan> sp, int studentId, int majorId, int schoolId, string planName)
+        {
+            insertParameterSet(majorId, schoolId, new int[0]);
 
+            // parameterSetID is global variable set after insertParameterSet is called
+            int paramsetId = parameterSetID;
+            string major = (from m in VirtualAdvisor.Major
+                where m.Id == majorId
+                select m.Name).FirstOrDefault();
+            var school = (from s in VirtualAdvisor.School
+                where s.Id == schoolId
+                select s.Name).FirstOrDefault();
+            var machineName = major + "_" + school;
+          planID = insertPlan(machineName, paramsetId, 1, -1.0f);
+
+            sp.ForEach(n => n.PlanId = planID);
+            //int StudentId, int PlanId, int Status
+            insertStudentStudyPlan( studentId, planID, 1, planName);
+            insertStudyPlan(sp);
+            return planID;
+        }
+        public int quarterStringToInt(string quarter)
+        {
+            switch (quarter.Trim().ToLower())
+            {
+                case "fall":
+                    return 1;
+                case "winter":
+                    return 2;
+                case "spring":
+                    return 3;
+                case "summer":
+                    return 4;
+                default:
+                    return -1;
+            }
+        }
+
+        /// <summary>
+        /// Takes SelectStudyPlan (string representation) and parses it into StudyPlan (id representation) 
+        /// </summary>
+        /// <param name="studyPlan">The studyPlan with string values</param>
+        /// <returns>StudyPlan with the associated id keys</returns>
+        /// <remarks>SelectStudyPlan is the format the webpage sends to the API in the body of the message.</remarks>
+        public List<StudyPlan> convertStudyPlan(List<SelectStudyPlan> studyPlan)
+        {
+            List<StudyPlan> result = new List<StudyPlan>();
+           // int id = studyPlan[0].PlanId;
+            foreach (SelectStudyPlan s in studyPlan)
+            {
+                StudyPlan sp = new StudyPlan();
+               // sp.PlanId = id;
+                sp.CourseId = getCourseId(s.CourseNumber);
+                sp.QuarterId = this.quarterStringToInt(s.Quarter);
+                sp.YearId = s.Year;
+                sp.DateAdded = DateTime.Now;
+                sp.LastDateModified = DateTime.Now;
+                
+                result.Add(sp);
+
+            }
+            return result;
+        }
     }
-
-
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using VirtualStudentAdviser.Services;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Cors.Internal;
+using Microsoft.Extensions.PlatformAbstractions;
+using Swashbuckle.AspNetCore.Swagger;
 using VirtualStudentAdviser.Filters;
 
 namespace VirtualStudentAdviser
@@ -53,9 +56,20 @@ namespace VirtualStudentAdviser
                ;
             services.AddScoped<IVirtualAdviserRepository, VirtualAdviserRepository>();
 
+            // Register the Swagger generator, defining one or more Swagger documents
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "VAA API", Version = "v1" });
+
+                var basePath = PlatformServices.Default.Application.ApplicationBasePath;
+                var xmlPath = Path.Combine(basePath, "VirtualStudentAdviser.xml");
+                c.IncludeXmlComments(xmlPath);
+            });
+
+
             //services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
             //{
-               
+
             //});
 
             //services.AddMvc();
@@ -73,11 +87,22 @@ namespace VirtualStudentAdviser
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
             app.UseCors("VsaCorsPolicy");
-           app.UseMvc();
 
-          
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            });
+
+
+            app.UseMvc();
+
+
             
-           
+
 
             // Shows UseCors with CorsPolicyBuilder.
             //app.UseCors(builder =>
